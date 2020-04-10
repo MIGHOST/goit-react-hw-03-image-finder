@@ -5,7 +5,7 @@ import styles from './Modal.module.css';
 class Modal extends Component {
   static propTypes = {
     onClose: PropTypes.func.isRequired,
-    imgUrl: PropTypes.string.isRequired,
+    children: PropTypes.node.isRequired,
   };
   backdropRef = createRef();
 
@@ -29,7 +29,7 @@ class Modal extends Component {
   };
 
   render() {
-    const { imgUrl } = this.props;
+    const { children } = this.props;
 
     return (
       <div
@@ -38,7 +38,7 @@ class Modal extends Component {
         onClick={this.handleBackdropClick}
       >
         <div className={styles.Modal}>
-          <img src={imgUrl} alt="img" />
+        {children}
         </div>
       </div>
     );

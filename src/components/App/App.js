@@ -4,19 +4,18 @@ import Searchbar from '../Searchbar/Searchbar';
 import ImageGallery from '../ImageGallery/ImageGallery';
 import Button from '../Button/Button';
 import * as imgApi from '../../services/img-api';
-import Spinner from '../Spinner/Spinner';
 import ErrorNotification from '../Error/ErrorNotification';
 import Modal from '../Modal/Modal';
 
 class App extends Component {
   state = {
-    images: [],
-    loading: false,
+    images: [],  
     searchQuery: '',
     page: 1,
     largeImageUrl: '',
     isOpen: false,
     error: null,
+    hasMore: true,
   };
   componentDidUpdate(prevProps, prevState) {
     const { searchQuery } = this.state;
@@ -33,18 +32,16 @@ class App extends Component {
   fetchImages = () => {
     const { searchQuery, page } = this.state;
 
-    this.setState({ loading: true });
-
     imgApi
       .fetchImg(searchQuery, page)
-      .then(images =>
+      .then(({ images, total }) =>
         this.setState(prevState => ({
           images: [...prevState.images, ...images],
           page: prevState.page + 1,
+          hasMore: total > 12 * page,
         })),
       )
-      .catch(error => this.setState({ error }))
-      .finally(() => this.setState({ loading: false }));
+      .catch(error => this.setState({ error }));
   };
 
   handleSearchFormSubmit = query => {
@@ -54,18 +51,26 @@ class App extends Component {
   };
 
   render() {
-    const { images, loading, isOpen, largeImageUrl, error } = this.state;
+    const { images, isOpen, largeImageUrl, error, hasMore } = this.state;
 
     return (
       <div className={styles.App}>
         <Searchbar onSubmit={this.handleSearchFormSubmit} />
         {images.length > 0 && (
-          <ImageGallery items={images} onImgClick={this.openModal} />
+          <ImageGallery
+            items={images}
+            onImgClick={this.openModal}
+            onFetch={this.fetchImages}
+            hasMore={hasMore}
+          />
         )}
-        {loading && <Spinner />}
-        {isOpen && <Modal imgUrl={largeImageUrl} onClose={this.closeModal} />}
+        {isOpen && (
+          <Modal onClose={this.closeModal}>
+            <img src={largeImageUrl} alt="img" />
+          </Modal>
+        )}
         {error && <ErrorNotification text={error.message} />}
-        {images.length > 0 && !loading && <Button onClick={this.fetchImages} />}
+        {images.length > 0 && <Button />}
       </div>
     );
   }
